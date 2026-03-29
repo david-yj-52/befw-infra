@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: nexus
+    restart: unless-stopped
+    ports:
+      - "8081:8081"   # UI / REST API / 모든 패키지 공통
+      - "8082:8082"   # Docker hosted (push)
+      - "8083:8083"   # Docker group  (pull)
+    volumes:
+      - ./nexus-data:/nexus-data
+    environment:
+      - INSTALL4J_ADD_VM_PARAMS=-Xms1g -Xmx2g -XX:MaxDirectMemorySize=2g
+    user: "200"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/service/rest/v1/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
