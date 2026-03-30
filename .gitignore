@@ -1,2 +1,6 @@
 .idea
 ./nexus/nexus-data
+./database/postgresql/.env
+./messaging/kafka/.env
+./messaging/solace/.env
+./local/./env

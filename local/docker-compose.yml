@@ -1,0 +1,27 @@
+# =============================================
+# TSH 로컬 개발환경 통합 Docker Compose
+# 사용법: docker compose --env-file .env up -d
+# =============================================
+# 각 컴포넌트 compose 파일을 include로 참조
+# → 설정 중복 없이 단일 진입점으로 전체 기동
+
+include:
+  - path: ../database/postgresql/docker-compose.yml
+    env_file: .env
+
+  - path: ../messaging/kafka/docker-compose.yml
+    env_file: .env
+
+  - path: ../messaging/solace/docker-compose.yml
+    env_file: .env
+
+  - path: ../nexus/docker-compose.yml
+    env_file: .env
+
+  # cloud-service는 Spring Boot 앱 확정 후 주석 해제
+  # - path: ../cloud-service/eureka/docker-compose.yml
+  #   env_file: .env
+  # - path: ../cloud-service/config-server/docker-compose.yml
+  #   env_file: .env
+  # - path: ../cloud-service/spring-cloud/docker-compose.yml
+  #   env_file: .env
