@@ -1,0 +1,55 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: tsh-kafka
+    restart: unless-stopped
+    environment:
+      # KRaft 모드 (Zookeeper 불필요 - Kafka 3.x 이상 권장)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_ADVERTISED_HOST:-localhost}:${KAFKA_PORT:-9092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk  # 고정 Cluster ID (재시작 시 일관성 유지)
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    volumes:
+      - tsh-kafkadata:/var/lib/kafka/data
+    networks:
+      - tsh-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Kafka UI - 토픽/메시지 모니터링
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: tsh-kafka-ui
+    restart: unless-stopped
+    environment:
+      KAFKA_CLUSTERS_0_NAME: tsh-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "${KAFKA_UI_PORT:-8989}:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - tsh-network
+
+volumes:
+  tsh-kafkadata:
+    name: tsh-kafkadata
+
+networks:
+  tsh-network:
+    name: tsh-network
+    driver: bridge
