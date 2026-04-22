@@ -12,6 +12,7 @@ services:
       - "${SOLACE_MQTT_PORT:-1883}:1883"     # MQTT
       - "${SOLACE_AMQP_PORT:-5672}:5672"     # AMQP
       - "${SOLACE_REST_PORT:-9000}:9000"     # REST
+      - "${SOLACE_WS_PORT:-8008}:8008"     # REST
       - "${SOLACE_MGMT_PORT:-8080}:8080"     # 관리 Web UI
     volumes:
       - tsh-solacedata:/var/lib/solace
