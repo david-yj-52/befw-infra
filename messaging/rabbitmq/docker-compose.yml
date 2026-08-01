@@ -1,0 +1,35 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: tsh-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
+    ports:
+      - "${RABBITMQ_AMQP_PORT:-5672}:5672"     # AMQP (애플리케이션 연결용)
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"   # 관리 Web UI
+    volumes:
+      - tsh-rabbitmqdata:/var/lib/rabbitmq
+    networks:
+      - tsh-network
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  tsh-rabbitmqdata:
+    name: tsh-rabbitmqdata
+
+networks:
+  tsh-network:
+    name: tsh-network
+    driver: bridge
