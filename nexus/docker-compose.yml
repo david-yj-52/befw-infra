@@ -15,7 +15,7 @@ services:
       - INSTALL4J_ADD_VM_PARAMS=-Xms1g -Xmx2g -XX:MaxDirectMemorySize=2g
     user: "200"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/service/rest/v1/status"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/service/rest/v1/status" ]
       interval: 10s
       timeout: 5s
       retries: 20
