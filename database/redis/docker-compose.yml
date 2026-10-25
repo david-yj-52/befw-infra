@@ -6,12 +6,14 @@ services:
     container_name: redis-cira
     restart: unless-stopped
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+      - "${REDIS_TCP_PORT:-5672}:6379"
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-your_secure_password}"
     volumes:
-      - redis_data:/data
+      # 상대 경로 방식 (docker-compose.yml이 있는 위치 기준 ./data 폴더에 저장)
+      - "${REDIS_DEFAULT_DIR:-./data}:/data"
+
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-your_secure_password}", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,9 +23,6 @@ services:
     container_name: redis-insight
     restart: unless-stopped
     ports:
-      - "5544:5544"
+      - "${REDIS_MGMT_PORT:-15672}:5544"
     depends_on:
       - redis
-
-volumes:
-  redis_data:
