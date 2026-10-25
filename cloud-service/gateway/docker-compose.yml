@@ -8,8 +8,9 @@ services:
       CONFIG_USER: ${CONFIG_USER:-config-user}
       CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
       SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in gateway/.env}
     ports:
-      - "127.0.0.1:${CLOUD_GATEWAY_PORT:-10001}:10001"
+      - "0.0.0.0:${CLOUD_GATEWAY_PORT:-10001}:10001"
     networks:
       - cloud-service-network
     healthcheck:

@@ -9,7 +9,7 @@ services:
       CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
       SPRING_PROFILES_ACTIVE: docker
     ports:
-      - "127.0.0.1:${CLOUD_EUREKA_PORT:-8761}:8761"
+      - "0.0.0.0:${CLOUD_EUREKA_PORT:-8761}:8761"
     networks:
       cloud-service-network:
         aliases:
