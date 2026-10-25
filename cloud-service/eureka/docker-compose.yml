@@ -1,0 +1,27 @@
+services:
+  cloud-eureka:
+    image: ${CLOUD_EUREKA_IMAGE:-ghcr.io/david-yj-52/befw-infra-cloud-eureka:latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      CONFIG_SERVER_URL: http://cloud-config:8888
+      CONFIG_USER: ${CONFIG_USER:-config-user}
+      CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "127.0.0.1:${CLOUD_EUREKA_PORT:-8761}:8761"
+    networks:
+      cloud-service-network:
+        aliases:
+          - cloud-eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q 'UP'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+networks:
+  cloud-service-network:
+    external: true
+    name: befw-cloud-network

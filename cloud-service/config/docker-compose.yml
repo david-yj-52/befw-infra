@@ -1,0 +1,33 @@
+services:
+  cloud-config:
+    image: ${CLOUD_CONFIG_IMAGE:-ghcr.io/david-yj-52/befw-infra-cloud-config:latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${CONFIG_SERVER_PROFILE:-native}
+      CONFIG_USER: ${CONFIG_USER:-config-user}
+      CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
+      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS: file:/config-repo
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_GIT_URI:-https://github.com/david-yj-52/befw-infra-cloud-cofing-repo}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: ${CONFIG_GIT_LABEL:-main}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: ${GIT_USERNAME:-}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: ${GIT_TOKEN:-}
+    volumes:
+      - ../../../befw-infra-cloud-cofing-repo:/config-repo:ro
+    ports:
+      - "127.0.0.1:${CLOUD_CONFIG_PORT:-8888}:8888"
+    networks:
+      - cloud-service-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --user="$${CONFIG_USER}" --password="$${CONFIG_PASSWORD}" -qO- http://localhost:8888/actuator/health | grep -q 'UP'
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+networks:
+  cloud-service-network:
+    external: true
+    name: befw-cloud-network

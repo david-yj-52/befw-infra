@@ -18,10 +18,77 @@ include:
   - path: ../nexus/docker-compose.yml
     env_file: .env
 
-  # cloud-service는 Spring Boot 앱 확정 후 주석 해제
-  # - path: ../cloud-service/eureka/docker-compose.yml
-  #   env_file: .env
-  # - path: ../cloud-service/config-server/docker-compose.yml
-  #   env_file: .env
-  # - path: ../cloud-service/spring-cloud/docker-compose.yml
-  #   env_file: .env
+services:
+  cloud-config:
+    image: ${CLOUD_CONFIG_IMAGE:-ghcr.io/david-yj-52/befw-infra-cloud-config:latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${CONFIG_SERVER_PROFILE:-native}
+      CONFIG_USER: ${CONFIG_USER:-config-user}
+      CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
+      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS: file:/config-repo
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_GIT_URI:-https://github.com/david-yj-52/befw-infra-cloud-cofing-repo}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: ${CONFIG_GIT_LABEL:-main}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME: ${GIT_USERNAME:-}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD: ${GIT_TOKEN:-}
+    volumes:
+      - ../../befw-infra-cloud-cofing-repo:/config-repo:ro
+    ports:
+      - "127.0.0.1:${CLOUD_CONFIG_PORT:-8888}:8888"
+    networks:
+      - tsh-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --user="$${CONFIG_USER}" --password="$${CONFIG_PASSWORD}" -qO- http://localhost:8888/actuator/health | grep -q 'UP'
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  cloud-eureka:
+    image: ${CLOUD_EUREKA_IMAGE:-ghcr.io/david-yj-52/befw-infra-cloud-eureka:latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      CONFIG_SERVER_URL: http://cloud-config:8888
+      CONFIG_USER: ${CONFIG_USER:-config-user}
+      CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "127.0.0.1:${CLOUD_EUREKA_PORT:-8761}:8761"
+    depends_on:
+      cloud-config:
+        condition: service_healthy
+    networks:
+      - tsh-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep -q 'UP'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  cloud-gateway:
+    image: ${CLOUD_GATEWAY_IMAGE:-ghcr.io/david-yj-52/befw-infra-cloud-gateway:latest}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      CONFIG_SERVER_URL: http://cloud-config:8888
+      CONFIG_USER: ${CONFIG_USER:-config-user}
+      CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "127.0.0.1:${CLOUD_GATEWAY_PORT:-10001}:10001"
+    depends_on:
+      cloud-eureka:
+        condition: service_healthy
+    networks:
+      - tsh-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:10001/actuator/health | grep -q 'UP'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s

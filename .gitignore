@@ -3,4 +3,6 @@
 ./database/postgresql/.env
 ./messaging/kafka/.env
 ./messaging/solace/.env
-./local/./env
+./local/.env
+/cloud-service/.env
+/cloud-service/*/.env
