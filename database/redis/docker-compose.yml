@@ -23,6 +23,6 @@ services:
     container_name: redis-insight
     restart: unless-stopped
     ports:
-      - "${REDIS_MGMT_PORT:-15672}:5544"
+      - "${REDIS_MGMT_PORT:-15672}:5540"
     depends_on:
       - redis
