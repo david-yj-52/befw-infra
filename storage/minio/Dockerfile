@@ -14,13 +14,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -o /out/minio .
 # ── runtime ────────────────────────────────────────────────────────────────
 FROM alpine:3.20
 
-RUN apk add --no-cache ca-certificates tzdata && \
-    addgroup -S minio && adduser -S minio -G minio
+RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=builder /out/minio /usr/local/bin/minio
 
 EXPOSE 9000 9001
-
-USER minio
 
 ENTRYPOINT ["/usr/local/bin/minio"]
