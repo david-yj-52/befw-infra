@@ -1,0 +1,34 @@
+services:
+  minio:
+    image: ghcr.io/david-yj-52/minio:latest
+    container_name: minio
+    restart: always
+    command: server /data --console-address ":${MINIO_CONSOLE_PORT:-9001}"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      # API (S3 호환) — 앱 서버가 호출
+      - "${MINIO_API_BIND:-127.0.0.1}:${MINIO_API_PORT:-9000}:9000"
+      # 관리 콘솔 (Web UI) — 내부 전용
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - cloud
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  minio-data:
+    name: minio-data
+
+# 앱 서버(d94-query 등)와 같은 네트워크에 붙어야 컨테이너 이름(minio)으로 DNS 해석된다.
+networks:
+  cloud:
+    external: true
+    name: ${CLOUD_NETWORK_NAME:-befw-cloud-network}

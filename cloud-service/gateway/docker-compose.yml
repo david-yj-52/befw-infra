@@ -3,12 +3,27 @@ services:
     image: ${CLOUD_GATEWAY_IMAGE:-ghcr.io/david-yj-52/befw-infra-cloud-gateway:latest}
     pull_policy: always
     restart: unless-stopped
+    # cloud-config 는 별도 compose 프로젝트(infra/cloud/config/)에서 관리되므로
+    # depends_on 대신 entrypoint 에서 Config Server 가 UP 될 때까지 폴링 후 기동한다.
+    # (재부팅 시 gateway 가 먼저 뜨면 optional: configserver 를 건너뛰어 라우팅 설정 미로드 문제 방지)
+    entrypoint:
+      - sh
+      - -c
+      - |
+        echo "Waiting for Config Server at http://cloud-config:8888 ..."
+        until wget -qO- http://cloud-config:8888/actuator/health 2>/dev/null | grep -q '"UP"'; do
+          sleep 3
+        done
+        echo "Config Server ready. Starting gateway..."
+        exec java -jar app.jar
     environment:
       CONFIG_SERVER_URL: http://cloud-config:8888
       CONFIG_USER: ${CONFIG_USER:-config-user}
       CONFIG_PASSWORD: ${CONFIG_PASSWORD:-config-pass}
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in gateway/.env}
+      # Config Server 를 반드시 로드해야 기동된다 (optional → fail-fast)
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "true"
     ports:
       - "0.0.0.0:${CLOUD_GATEWAY_PORT:-10001}:10001"
     networks:
