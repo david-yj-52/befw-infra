@@ -9,8 +9,7 @@ RUN git clone --depth 1 --branch ${MINIO_VERSION} \
 
 WORKDIR /src/minio
 
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -o /out/minio ./cmd/minio && \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -o /out/mc    ./cmd/mc    || true
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -o /out/minio .
 
 # ── runtime ────────────────────────────────────────────────────────────────
 FROM alpine:3.20
